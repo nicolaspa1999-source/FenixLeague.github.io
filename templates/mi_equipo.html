@@ -1,0 +1,671 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Equipo - Fenix League</title>
+    <!-- Corrección para eliminar la flecha gris > -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Ocultar breadcrumb, flecha de navegación y elementos de depuración */
+        .breadcrumb, 
+        nav[aria-label="breadcrumb"],
+        .nav-breadcrumb,
+        #debug,
+        .debug-toolbar,
+        body > div:first-child,
+        .navbar {
+            display: none !important;
+        }
+    </style>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #1a1a1a; color: #eee; }
+        .header-team { background-color: #2a2a2a; border-radius: 15px; padding: 25px; }
+        .manager-name { color: #00ffcc !important; font-weight: bold; }
+        .info-card { background-color: #2a2a2a; border: none; border-radius: 12px; padding: 20px 15px; text-align: center; }
+        .info-card h5 { color: #aaa; margin-bottom: 8px; }
+        .info-card h2 { font-size: 2.2rem; font-weight: bold; margin: 0; }
+        .nav-tabs .nav-link {
+            color: #ccc;
+            border: none;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-tabs .nav-link.active {
+            color: white;
+            border-bottom: 3px solid #00ffcc;
+            background: transparent;
+        }
+        .rating-95 { background-color: #00ccff !important; color: #000 !important; }
+        .rating-90 { background-color: #66ddff !important; color: #000 !important; }
+        .rating-80 { background-color: #00cc66 !important; color: #000 !important; }
+        .rating-70 { background-color: #ffcc33 !important; color: #000 !important; }
+        .rating-65 { background-color: #ffaa00 !important; color: #000 !important; }
+        .rating-bajo { background-color: #ff4444 !important; color: #000 !important; }
+        .badge-leyenda { background-color: #ffd700 !important; color: #000 !important; font-weight: bold; }
+        .badge-activo { background-color: #28a745 !important; color: #fff !important; }
+        .text-sin-equipo { color: #ffffff !important; font-style: italic; }
+    </style>
+</head>
+<body>
+    <!-- CSRF oculto -->
+    <form style="display:none;">{% csrf_token %}</form>
+
+    <div class="container mt-5">
+
+        <!-- Cabecera -->
+        <div class="header-team text-center mb-4">
+            <h1 class="mb-1">{{ profile.equipo_asignado.nombre }}</h1>
+            <h5>Manager: <span class="manager-name">{{ user.username }}</span></h5>
+        </div>
+
+        <!-- Información superior -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h5>Jugadores en plantilla</h5>
+                    <h2 class="text-white">{{ cantidad_jugadores }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h5>Presupuesto Traspasos</h5>
+                    <h2 class="text-white">${{ presupuesto_traspaso|floatformat:0 }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h5>Presupuesto Salarial</h5>
+                    <h2 class="text-white">${{ presupuesto_salarial|floatformat:0 }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'mi_equipo' %}active{% endif %}" data-bs-toggle="tab" href="#equipo">Mi Equipo</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'mercado' %}active{% endif %}" data-bs-toggle="tab" href="#mercado">Mercado</a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+
+            <!-- TAB 1: MI EQUIPO -->
+            <div class="tab-pane fade {% if active_tab == 'mi_equipo' %}show active{% endif %}" id="equipo" role="tabpanel">
+                <h4 class="mb-3">Plantilla - {{ profile.equipo_asignado.nombre }}</h4>
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Jugador</th>
+                            <th>Posición</th>
+                            <th>Estilo de Juego</th>
+                            <th>Valoración</th>
+                            <th>Edad</th>
+                            <th>Altura</th>
+                            <th>Salario Anual</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for jugador in mis_jugadores %}
+                        <tr>
+                            <td><strong>{{ jugador.nombre }}</strong></td>
+                            <td>{{ jugador.posicion }}</td>
+                            <td>{{ jugador.estilo_juego|default:"-" }}</td>
+                            <td>
+                                <span class="badge fs-6 px-3 py-2 
+                                    {% if jugador.valoracion >= 95 %}rating-95
+                                    {% elif jugador.valoracion >= 90 %}rating-90
+                                    {% elif jugador.valoracion >= 80 %}rating-80
+                                    {% elif jugador.valoracion >= 70 %}rating-70
+                                    {% elif jugador.valoracion >= 65 %}rating-65
+                                    {% else %}rating-bajo{% endif %}">
+                                    {{ jugador.valoracion }}
+                                </span>
+                            </td>
+                            <td>{{ jugador.edad }}</td>
+                            <td>{{ jugador.altura }} cm</td>
+                            <td><span class="text-info fw-bold">${{ jugador.salario_anual|floatformat:0 }}</span></td>
+                            <td>
+                                <a href="{% url 'detalle_jugador' jugador.id %}" class="btn btn-sm btn-outline-info me-2">Ver Stats</a>
+<button type="button" class="btn btn-sm btn-outline-danger release-btn"
+                                        data-player-id="{{ jugador.id }}"
+                                        data-player-name="{{ jugador.nombre }}"
+                                        data-player-price="{{ jugador.precio_calculado|default:0 }}">
+                                    Liberar
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center py-4">No hay jugadores en este equipo aún.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB MERCADO -->
+            <div class="tab-pane fade {% if active_tab == 'mercado' %}show active{% endif %}" id="mercado">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Mercado - Todos los jugadores</h4>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre..." style="width: 260px;">
+                        <select id="posicionFilter" class="form-select" style="width: 130px;">
+                            <option value="">Todas las pos.</option>
+                        </select>
+                        <select id="paisFilter" class="form-select" style="width: 140px;">
+                            <option value="">Todos los países</option>
+                        </select>
+                        <select id="sortFilter" class="form-select" style="width: 220px;">
+                            <option value="valoracion_desc">Valoración (Alta → Baja)</option>
+                            <option value="valoracion_asc">Valoración (Baja → Alta)</option>
+                            <option value="precio_desc">Precio Estimado (Alto → Bajo)</option>
+                            <option value="precio_asc">Precio Estimado (Bajo → Alto)</option>
+                            <option value="edad_desc">Edad (Mayor → Menor)</option>
+                            <option value="edad_asc">Edad (Menor → Mayor)</option>
+                            <option value="altura_desc">Altura (Alta → Baja)</option>
+                            <option value="altura_asc">Altura (Baja → Alta)</option>
+                        </select>
+                        <button id="applyFilters" class="btn btn-primary">Aplicar Filtros</button>
+                    </div>
+                </div>
+
+                <table class="table table-dark table-hover align-middle" id="mercadoTable">
+                    <thead>
+                        <tr>
+                            <th>Jugador</th>
+                            <th>Equipo</th>
+                            <th>País</th>
+                            <th>Posición</th>
+                            <th>Estilo de Juego</th>
+                            <th>Valoración</th>
+                            <th>Edad</th>
+                            <th>Altura</th>
+                            <th>Tipo</th>
+                            <th>Precio Estimado</th>
+                            <th>Salario Anual</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for jugador in page_obj %}
+                        <tr class="player-row"
+                            data-nombre="{{ jugador.nombre|lower }}"
+                            data-posicion="{{ jugador.posicion }}"
+                            data-pais="{{ jugador.pais|lower|default:'' }}"
+                            data-edad="{{ jugador.edad }}"
+                            data-altura="{{ jugador.altura }}"
+                            data-valoracion="{{ jugador.valoracion }}"
+                            data-precio="{{ jugador.precio_calculado }}"
+                            data-salario="{{ jugador.salario_anual }}"
+                            data-id="{{ jugador.id }}"
+                            data-equipo-original="{{ jugador.equipo_original.nombre|default:'' }}">
+                            <td>
+                                <a href="{% url 'detalle_jugador' jugador.id %}" class="text-white text-decoration-none fw-bold hover-underline">
+                                    {{ jugador.nombre }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if not jugador.equipo_original or jugador.equipo_original.nombre == "Desconocido" %}
+                                    <span class="text-sin-equipo">Sin Equipo</span>
+                                {% else %}
+                                    {{ jugador.equipo_original.nombre }}
+                                {% endif %}
+                            </td>
+                            <td>{{ jugador.pais|default:"-" }}</td>
+                            <td>{{ jugador.posicion }}</td>
+                            <td>{{ jugador.estilo_juego|default:"-" }}</td>
+                            <td>
+                                <span class="badge fs-6 px-3 py-2 
+                                    {% if jugador.valoracion >= 95 %}rating-95{% elif jugador.valoracion >= 90 %}rating-90{% elif jugador.valoracion >= 80 %}rating-80{% elif jugador.valoracion >= 70 %}rating-70{% elif jugador.valoracion >= 65 %}rating-65{% else %}rating-bajo{% endif %}">
+                                    {{ jugador.valoracion }}
+                                </span>
+                            </td>
+                            <td>{{ jugador.edad }}</td>
+                            <td>{{ jugador.altura }} cm</td>
+                            <td>
+                                {% if jugador.es_leyenda %}
+                                    <span class="badge badge-leyenda">LEYENDA</span>
+                                {% else %}
+                                    <span class="badge badge-activo">ACTIVO</span>
+                                {% endif %}
+                            </td>
+                            <td><strong class="{% if jugador.es_leyenda %}text-warning{% else %}text-info{% endif %}">${{ jugador.precio_calculado|floatformat:0 }}</strong></td>
+                            <td><span class="text-info fw-bold">${{ jugador.salario_anual|floatformat:0 }}</span></td>
+                            <td>
+                                {% if jugador.equipo_original and jugador.equipo_original.nombre == profile.equipo_asignado.nombre %}
+                                    <span class="badge bg-secondary text-white px-3 py-2">En tu equipo</span>
+                                {% elif jugador.equipo_original and jugador.equipo_original.nombre in taken_teams %}
+                                    <button type="button" class="btn btn-sm btn-outline-warning offer-btn"
+        data-player-id="{{ jugador.id }}"
+        data-player-name="{{ jugador.nombre }}"
+        data-player-rating="{{ jugador.valoracion }}"
+        data-player-posicion="{{ jugador.posicion }}"
+        data-player-edad="{{ jugador.edad }}"
+        data-player-altura="{{ jugador.altura }}"
+        data-player-estilo="{{ jugador.estilo_juego|default:'-' }}"
+        data-player-precio="{{ jugador.precio_calculado }}"
+        data-player-salario="{{ jugador.salario_anual }}">
+    Ofertar
+</button>
+{% else %}
+    <button type="button" class="btn btn-sm btn-outline-success fichar-btn"
+            data-player-id="{{ jugador.id }}"
+            data-player-name="{{ jugador.nombre }}"
+            data-player-precio="{{ jugador.precio_calculado }}"
+            data-player-salario="{{ jugador.salario_anual }}">
+        Fichar
+    </button>
+{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'home' %}" class="btn btn-secondary">← Volver a Inicio</a>
+        </div>
+    </div>
+
+        <!-- Modal Oferta de Traspaso - Versión Elegante y Compacta -->
+    <div class="modal fade" id="offerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 780px;">
+            <div class="modal-content bg-dark text-white border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+                
+                <!-- Header -->
+                <div class="modal-header border-0 px-4 py-3" style="background: linear-gradient(90deg, #1f1f1f, #2a2a2a);">
+                    <h4 class="modal-title fw-bold text-warning">OFERTA DE TRASPASO</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        
+                        <!-- Columna Izquierda: Info del Jugador -->
+                        <div class="col-md-5 border-end border-secondary p-4">
+                            <h5 class="text-warning mb-3">INFO DE JUGADOR</h5>
+                            <h4 id="modalPlayerName" class="fw-bold mb-3 text-white"></h4>
+                            
+                            <div class="text-light small">
+                                <div class="mb-1"><strong>MED:</strong> <span id="modalPlayerRating" class="text-info fw-bold"></span></div>
+                                <div class="mb-1"><strong>POS:</strong> <span id="modalPlayerPos"></span></div>
+                                <div class="mb-1"><strong>EDAD:</strong> <span id="modalPlayerAge"></span></div>
+                                <div class="mb-1"><strong>ALTURA:</strong> <span id="modalPlayerAltura"></span></div>
+                                <div class="mb-1"><strong>ESTILO:</strong> <span id="modalPlayerEstilo"></span></div>
+                                <hr class="border-secondary my-2">
+                                <div class="mb-1"><strong>PRECIO ESTIMADO:</strong> <span id="modalPlayerValue" class="text-success fw-bold"></span></div>
+                                <div><strong>SALARIO ANUAL:</strong> <span id="modalPlayerSalario" class="text-cyan fw-bold"></span></div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Formulario de Oferta -->
+                        <div class="col-md-7 p-4">
+                            <h5 class="text-warning mb-3">OFERTA DE TRASPASO</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-light">Oferta por traspaso:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">$</span>
+                                    <input type="number" id="offerAmount" class="form-control bg-dark text-white border-secondary" value="650000000" min="1000000" step="1000000">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-light">Oferta de Salario Anual:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">$</span>
+                                    <input type="number" id="offerSalario" class="form-control bg-dark text-white border-secondary" value="5000000" min="100000" step="100000">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-light">Mensaje / Comentario (opcional)</label>
+                                <textarea id="offerMessage" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Ej: Buen jugador para reforzar la defensa..."></textarea>
+                            </div>
+
+                            <!-- Presupuestos reales - Fondo negro y texto blanco -->
+                            <div class="row g-2 mt-3">
+                                <div class="col-12">
+                                    <div class="p-3 rounded-3" style="background-color: #1a1a1a; border: 1px solid #333;">
+                                        <strong class="text-white">Presupuesto Traspaso restante:</strong> 
+                                        <span id="presupuestoTraspaso" class="text-white fw-bold"></span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-3 rounded-3" style="background-color: #1a1a1a; border: 1px solid #333;">
+                                        <strong class="text-white">Presupuesto Salarial restante:</strong> 
+                                        <span id="presupuestoSalarial" class="text-white fw-bold"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 bg-dark px-4 pb-4">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="sendOfferBtn" class="btn btn-warning px-5 fw-bold">ENVIAR OFERTA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON -->
+    <script id="allPlayersJson" type="application/json">
+    {{ all_players_json|safe }}
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Cargar datos JSON
+            let allPlayers = [];
+            try {
+                allPlayers = JSON.parse(document.getElementById('allPlayersJson').textContent || '[]');
+            } catch(e) {
+                console.error("Error al cargar JSON de jugadores:", e);
+            }
+
+            const currentTeamName = "{{ profile.equipo_asignado.nombre|escapejs }}";
+            const currentUsername = "{{ user.username|escapejs }}";
+
+            // ==================== FILTROS ====================
+            function applyFilters() {
+                let filtered = [...allPlayers];
+
+                const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+                const posicionFilter = document.getElementById('posicionFilter')?.value || '';
+                const paisFilter = document.getElementById('paisFilter')?.value || '';
+                const sortFilter = document.getElementById('sortFilter')?.value || '';
+
+                if (searchTerm) {
+                    filtered = filtered.filter(p => (p.nombre || '').toLowerCase().includes(searchTerm));
+                }
+
+                if (posicionFilter) {
+                    filtered = filtered.filter(p => p.posicion === posicionFilter);
+                }
+
+                if (paisFilter) {
+                    filtered = filtered.filter(p => (p.pais || '').toLowerCase() === paisFilter.toLowerCase());
+                }
+
+                if (sortFilter) {
+                    switch(sortFilter) {
+                        case 'valoracion_desc':
+                            filtered.sort((a, b) => b.valoracion - a.valoracion);
+                            break;
+                        case 'valoracion_asc':
+                            filtered.sort((a, b) => a.valoracion - b.valoracion);
+                            break;
+                        case 'precio_desc':
+                            filtered.sort((a, b) => (b.precio_calculado || 0) - (a.precio_calculado || 0));
+                            break;
+                        case 'precio_asc':
+                            filtered.sort((a, b) => (a.precio_calculado || 0) - (b.precio_calculado || 0));
+                            break;
+                        case 'edad_desc':
+                            filtered.sort((a, b) => b.edad - a.edad);
+                            break;
+                        case 'edad_asc':
+                            filtered.sort((a, b) => a.edad - b.edad);
+                            break;
+                        case 'altura_desc':
+                            filtered.sort((a, b) => b.altura - a.altura);
+                            break;
+                        case 'altura_asc':
+                            filtered.sort((a, b) => a.altura - b.altura);
+                            break;
+                    }
+                }
+
+                renderMarketTable(filtered);
+            }
+
+            function renderMarketTable(players) {
+                const tbody = document.querySelector('#mercadoTable tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                players.forEach(p => {
+                    let accionHTML = '';
+
+                    if (p.equipo_original === currentTeamName) {
+                        accionHTML = `<span class="badge bg-secondary text-white px-3 py-2">En tu equipo</span>`;
+                    } else if (p.dueño_actual) {
+                        accionHTML = `<button type="button" class="btn btn-sm btn-outline-warning offer-btn"
+                            data-player-id="${p.id}"
+                            data-player-name="${p.nombre}"
+                            data-player-rating="${p.valoracion}"
+                            data-player-posicion="${p.posicion}"
+                            data-player-edad="${p.edad}"
+                            data-player-altura="${p.altura}"
+                            data-player-estilo="${p.estilo_juego || '-'}"
+                            data-player-precio="${p.precio_calculado}"
+                            data-player-salario="${p.salario_anual}">
+                            Ofertar
+                        </button>`;
+                    } else {
+                        accionHTML = `<button type="button" class="btn btn-sm btn-outline-success fichar-btn"
+                            data-player-id="${p.id}"
+                            data-player-name="${p.nombre}"
+                            data-player-precio="${p.precio_calculado}"
+                            data-player-salario="${p.salario_anual}">
+                            Fichar
+                        </button>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><a href="/jugador/${p.id}/" class="text-white fw-bold">${p.nombre}</a></td>
+                        <td>${p.equipo_original || 'Sin Equipo'}</td>
+                        <td>${p.pais || '-'}</td>
+                        <td>${p.posicion}</td>
+                        <td>${p.estilo_juego || '-'}</td>
+                        <td><span class="badge ${p.valoracion >= 95 ? 'rating-95' : p.valoracion >= 90 ? 'rating-90' : p.valoracion >= 80 ? 'rating-80' : p.valoracion >= 70 ? 'rating-70' : 'rating-bajo'}">${p.valoracion}</span></td>
+                        <td>${p.edad}</td>
+                        <td>${p.altura} cm</td>
+                        <td><span class="badge ${p.es_leyenda ? 'badge-leyenda' : 'badge-activo'}">${p.es_leyenda ? 'LEYENDA' : 'ACTIVO'}</span></td>
+                        <td><strong class="${p.es_leyenda ? 'text-warning' : 'text-info'}">$${Number(p.precio_calculado || 0).toLocaleString('es-ES')}</strong></td>
+                        <td><span class="text-info fw-bold">$${Number(p.salario_anual || 0).toLocaleString('es-ES')}</span></td>
+                        <td>${accionHTML}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('searchInput').addEventListener('keyup', applyFilters);
+            document.getElementById('posicionFilter').addEventListener('change', applyFilters);
+            document.getElementById('paisFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortFilter').addEventListener('change', applyFilters);
+
+            const applyBtn = document.getElementById('applyFilters');
+            if (applyBtn) applyBtn.addEventListener('click', applyFilters);
+
+            const posicionesSet = new Set(allPlayers.map(p => p.posicion).filter(Boolean));
+            const paisesSet = new Set(allPlayers.map(p => p.pais).filter(Boolean));
+
+            const posicionSelect = document.getElementById('posicionFilter');
+            Array.from(posicionesSet).sort().forEach(pos => {
+                const opt = document.createElement('option');
+                opt.value = pos;
+                opt.textContent = pos;
+                posicionSelect.appendChild(opt);
+            });
+
+            const paisSelect = document.getElementById('paisFilter');
+            Array.from(paisesSet).sort().forEach(pais => {
+                const opt = document.createElement('option');
+                opt.value = pais;
+                opt.textContent = pais;
+                paisSelect.appendChild(opt);
+            });
+
+            applyFilters();
+
+
+            // ==================== LIBERAR ====================
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('release-btn')) {
+                    const btn = e.target;
+                    const playerId = btn.getAttribute('data-player-id');
+                    const playerName = btn.getAttribute('data-player-name');
+                    const price = parseInt(btn.getAttribute('data-player-price') || 0);
+
+                    const traspaso = Math.round(price * 0.30);
+                    const salarial = Math.round(price * 0.15);
+
+                    if (confirm(`¿Liberar a ${playerName}?\n\n+$${traspaso.toLocaleString('es-ES')} a Traspasos\n+$${salarial.toLocaleString('es-ES')} a Salarial`)) {
+                        fetch("{% url 'liberar_jugador' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                            },
+                            body: JSON.stringify({ player_id: playerId })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + (data.error || 'No se pudo liberar'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Error de conexión');
+                        });
+                    }
+                }
+            });
+
+// ==================== FICHAR JUGADOR (Simple) ====================
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('fichar-btn')) {
+                    const btn = e.target;
+                    
+                    const playerId = btn.getAttribute('data-player-id');
+                    const playerName = btn.getAttribute('data-player-name') || 'Jugador';
+                    const precio = parseInt(btn.getAttribute('data-player-precio') || '0', 10);
+                    const salario = parseInt(btn.getAttribute('data-player-salario') || '0', 10);
+
+                    const maxJugadores = 32;
+                    const currentJugadores = {{ cantidad_jugadores|default:0 }};
+
+                    if (currentJugadores >= maxJugadores) {
+                        alert('❌ Plantilla Completa (máximo 32 jugadores)');
+                        return;
+                    }
+
+                    if (precio > (typeof presupuestoTraspaso !== 'undefined' ? presupuestoTraspaso : 0)) {
+                        alert('❌ Presupuesto de Traspasos insuficiente');
+                        return;
+                    }
+                    if (salario > (typeof presupuestoSalarial !== 'undefined' ? presupuestoSalarial : 0)) {
+                        alert('❌ Presupuesto Salarial insuficiente');
+                        return;
+                    }
+
+                    if (confirm(`¿Fichar a ${playerName}?\n\nCosto: $${precio.toLocaleString('es-ES')} Traspasos\nSalario Anual: $${salario.toLocaleString('es-ES')}`)) {
+                        fetch("{% url 'fichar_jugador' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                            },
+                            body: JSON.stringify({ player_id: playerId })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert(data.message || `¡${playerName} fichado correctamente!`);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + (data.error || 'No se pudo fichar'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Error de conexión');
+                        });
+                    }
+                }
+            });
+
+            // ==================== OFERTAR ====================
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('offer-btn')) {
+                    const btn = e.target;
+                    
+                    const playerName   = btn.getAttribute('data-player-name') || '';
+                    const playerRating = btn.getAttribute('data-player-rating') || '';
+                    const playerPos    = btn.getAttribute('data-player-posicion') || '';
+                    const playerEdad   = btn.getAttribute('data-player-edad') || '';
+                    const playerAltura = btn.getAttribute('data-player-altura') || '';
+                    const playerEstilo = btn.getAttribute('data-player-estilo') || '';
+                    const playerPrecio = parseInt(btn.getAttribute('data-player-precio') || 0);
+                    const playerSalario = parseInt(btn.getAttribute('data-player-salario') || 0);
+
+                    // Llenar datos del jugador
+                    document.getElementById('modalPlayerName').textContent = playerName;
+                    document.getElementById('modalPlayerRating').textContent = playerRating;
+                    document.getElementById('modalPlayerPos').textContent = playerPos;
+                    document.getElementById('modalPlayerAge').textContent = playerEdad;
+                    document.getElementById('modalPlayerAltura').textContent = playerAltura + " cm";
+                    document.getElementById('modalPlayerEstilo').textContent = playerEstilo || '-';
+                    document.getElementById('modalPlayerValue').textContent = '$' + playerPrecio.toLocaleString('es-ES');
+                    document.getElementById('modalPlayerSalario').textContent = '$' + playerSalario.toLocaleString('es-ES');
+
+                    // === PRESUPUESTOS REALES (con fallback seguro) ===
+                    const traspasoRestante = (typeof presupuestoTraspaso !== 'undefined' && presupuestoTraspaso !== null) 
+                                           ? Number(presupuestoTraspaso) : 0;
+                    const salarialRestante = (typeof presupuestoSalarial !== 'undefined' && presupuestoSalarial !== null) 
+                                           ? Number(presupuestoSalarial) : 0;
+
+                    const traspasoEl = document.getElementById('presupuestoTraspaso');
+                    const salarialEl = document.getElementById('presupuestoSalarial');
+
+                    if (traspasoEl) traspasoEl.textContent = '$' + traspasoRestante.toLocaleString('es-ES');
+                    if (salarialEl) salarialEl.textContent = '$' + salarialRestante.toLocaleString('es-ES');
+
+                    const modal = new bootstrap.Modal(document.getElementById('offerModal'));
+                    modal.show();
+                }
+            });
+
+            // Enviar oferta
+            document.getElementById('sendOfferBtn').addEventListener('click', function() {
+                const amount = parseInt(document.getElementById('offerAmount').value) || 0;
+                const salario = parseInt(document.getElementById('offerSalario').value) || 0;
+                const mensaje = document.getElementById('offerMessage').value.trim();
+
+                alert(`✅ Oferta enviada correctamente!\n\n` +
+                      `Traspaso: $${amount.toLocaleString('es-ES')}\n` +
+                      `Salario Anual: $${salario.toLocaleString('es-ES')}\n` +
+                      `Mensaje: ${mensaje || 'Sin mensaje'}`);
+
+                bootstrap.Modal.getInstance(document.getElementById('offerModal')).hide();
+            });
+
+        });
+    </script>
+
+    <!-- VARIABLES GLOBALES PARA PRESUPUESTOS (MUY IMPORTANTE) -->
+    <script>
+        const presupuestoTraspaso = {{ presupuesto_traspaso|default:0 }};
+        const presupuestoSalarial = {{ presupuesto_salarial|default:0 }};
+    </script>
+
+</body>
+</html>

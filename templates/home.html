@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Fenix League - PES 2017</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #1a1a1a; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .card-espera {
+            background-color: #252525;
+            border: 2px solid #ffc107;
+            max-width: 680px;
+            margin: 30px auto;
+            padding: 40px 30px;
+            border-radius: 12px;
+        }
+        .manager-name {
+            color: #00ffcc;
+            font-weight: bold;
+        }
+        .titulo-espera {
+            background-color: #0d6efd;
+            color: white;
+            padding: 14px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.35rem;
+            margin-bottom: 30px;
+        }
+        .texto-blanco {
+            color: #ffffff !important;
+            font-size: 1.2rem;
+            line-height: 1.7;
+        }
+        .linea-separadora {
+            border-top: 1px solid #ffc107;
+            margin: 35px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5 text-center">
+        <h1 class="display-4 mb-2">FÉNIX ECUABET LEAGUE</h1>
+        <p class="lead mb-5">PAGINA PARA GESTION DE EQUIPO</p>
+
+        {% if user.is_authenticated and not user.is_superuser %}
+            
+            <h4>Bienvenido, <span class="manager-name">{{ user.username }}</span></h4>
+
+            {% if profile.equipo_asignado %}
+                <!-- SI YA TIENE EQUIPO ASIGNADO (por admin) -->
+                <div class="mt-5">
+                    <a href="{% url 'mi_equipo' %}" class="btn btn-success btn-lg px-5 py-3">
+                        Ver Mi Equipo
+                    </a>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4 py-2">Cerrar Sesión</a>
+                </div>
+
+            {% elif profile.estado_eleccion == 'aprobado' and profile.equipo_asignado %}
+                <!-- Backup por si acaso -->
+                <div class="mt-5">
+                    <a href="{% url 'mi_equipo' %}" class="btn btn-success btn-lg px-5 py-3">
+                        Ver Mi Equipo
+                    </a>
+                </div>
+
+            {% else %}
+                <!-- MENSAJE DE ESPERA (cuando envió opciones pero admin aún no asigna) -->
+                <div class="card card-espera">
+                    <div class="titulo-espera mx-auto">
+                        ⏳ Tus opciones de equipo han sido enviadas
+                    </div>
+
+                    <p class="texto-blanco">
+                        El administrador está revisando tus elecciones.
+                    </p>
+                    <p class="texto-blanco fw-bold">
+                        Por favor espera a que te asigne tu equipo definitivo.
+                    </p>
+                    
+                    <div class="linea-separadora"></div>
+                    
+                    <p class="texto-blanco">
+                        Una vez que el admin apruebe tu equipo, aparecerá el botón para acceder a "Mi Equipo".
+                    </p>
+                </div>
+
+                <div class="mt-5">
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4 py-2">Cerrar Sesión</a>
+                </div>
+            {% endif %}
+
+        {% endif %}
+    </div>
+</body>
+</html>

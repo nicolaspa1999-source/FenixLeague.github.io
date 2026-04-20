@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión - Fenix League</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-image: url("https://i.postimg.cc/9fkK3Jq1/fondo-login.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.80);
+            z-index: -1;
+        }
+
+        .login-card {
+            background-color: rgba(25, 25, 25, 0.95);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .logo-title {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #bbbbbb;
+            font-size: 1.05rem;
+            margin-bottom: 30px;
+        }
+
+        .form-control {
+            background-color: #2a2a2a;
+            border: 1px solid #555;
+            color: white;
+            padding: 14px 16px;
+            border-radius: 10px;
+        }
+
+        .form-control::placeholder {
+            color: #ffffff !important;   /* ← Esto hace que el texto de los recuadros sea blanco */
+            opacity: 0.85;
+        }
+
+        .form-control:focus {
+            background-color: #2a2a2a;
+            border-color: #00ffcc;
+            color: white;
+            box-shadow: 0 0 0 0.3rem rgba(0, 255, 204, 0.25);
+        }
+
+        .btn-login {
+            background: linear-gradient(90deg, #00ffcc, #00ccaa);
+            color: #000;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.15rem;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(90deg, #00ccaa, #00ffcc);
+            transform: translateY(-2px);
+        }
+
+        .footer-text {
+            color: #999999;
+            font-size: 0.95rem;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card text-center">
+        <h1 class="logo-title">
+            FÉNIX ECUABET LEAGUE
+        </h1>
+        <p class="subtitle">PÁGINA PARA GESTIÓN DE EQUIPO</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-4">
+                    {{ message|safe }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Nombre de usuario" required autofocus>
+            </div>
+            
+            <div class="mb-4">
+                <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+            </div>
+
+            <button type="submit" class="btn btn-login w-100">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="footer-text">
+            Solo los administradores pueden crear cuentas.<br>
+            Contacta al admin si no tienes usuario.
+        </div>
+    </div>
+</body>
+</html>

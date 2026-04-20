@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Stats - {{ jugador.nombre }} - Fenix League</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f0f0f; color: #ddd; }
+        .card-custom { background-color: #1f1f1f; border: 1px solid #333; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .header { background-color: #002244; padding: 30px; text-align: center; border-radius: 12px; }
+        .section-title { background-color: #003087; padding: 12px; text-align: center; font-weight: bold; }
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #333; }
+
+        .stat-value {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 54px;
+            text-align: center;
+            color: #000000 !important;
+        }
+
+        .stat-95 { background-color: #00ccff !important; }
+        .stat-90 { background-color: #66ddff !important; }
+        .stat-80 { background-color: #00cc66 !important; }
+        .stat-70 { background-color: #ffaa00 !important; }
+        .stat-bajo { background-color: #ff4444 !important; }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <a href="{% url 'mi_equipo' %}" class="btn btn-secondary mb-4">← Volver a Mi Equipo</a>
+
+    <div class="header mb-5">
+        <h1>{{ jugador.nombre }}</h1>
+        <h4>{{ jugador.posicion }} • {{ jugador.equipo_original.nombre }}</h4>
+        <h2 class="text-warning">Valoración: <strong>{{ jugador.valoracion }}</strong></h2>
+    </div>
+
+    <!-- Secciones principales -->
+    <div class="row">
+        {% for categoria, stats in stats_ordenadas.items %}
+        <div class="col-md-4 mb-4">
+            <div class="card-custom">
+                <div class="section-title">{{ categoria }}</div>
+                {% for nombre, data in stats.items %}
+                <div class="stat-row">
+                    <span>{{ nombre }}</span>
+                    <span class="stat-value {{ data.color }}">{{ data.value }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+        <!-- POSICIONES -->
+    {% if posiciones %}
+    <div class="card-custom">
+        <div class="section-title">POSICIONES</div>
+        <div class="row p-3 text-center g-2">
+            {% for pos, data in posiciones.items %}
+            <div class="col-md-2 col-sm-3 col-4 mb-3">
+                <div class="stat-value {{ data.color }}">
+                    {{ pos }} <strong>{{ data.value }}</strong>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+        <!-- HABILIDADES ESPECIALES -->
+    {% if habilidades %}
+    <div class="card-custom">
+        <div class="section-title">HABILIDADES ESPECIALES</div>
+        <div class="p-4">
+            <div class="row g-2">
+                {% for hab, val in habilidades.items %}
+                <div class="col-md-3 col-lg-2 col-6">
+                    <span class="stat-value d-block text-center py-2 
+                        {% if val == 'Si' %}stat-80{% else %}stat-bajo{% endif %}">
+                        {{ hab }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-5">
+        <a href="{% url 'mi_equipo' %}" class="btn btn-secondary px-5 py-2">Volver a Mi Equipo</a>
+    </div>
+</div>
+</body>
+</html>
